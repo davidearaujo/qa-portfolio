@@ -1,0 +1,10 @@
+email,password,expectedStatus,description
+,password123,400,empty email
+not-an-email,password123,400,malformed email - no @ or domain
+missing-at-sign.com,password123,400,malformed email - missing @
+double@@at.com,password123,400,malformed email - double @
+spaced email@example.com,password123,400,email contains space
+valid.short.pw@example.com,short,400,password below 8 char minimum
+valid.empty.pw@example.com,,400,empty password
+valid.long.pw@example.com,ThisIsAPasswordThatIsExactlySeventyTwoCharactersLongToTestTheUpperBound1,201,password at the 72 char boundary (valid)
+valid.toolong.pw@example.com,ThisIsAPasswordThatIsWayTooLongAndExceedsTheSeventyTwoCharacterUpperBoundOnPurpose123,400,password exceeds 72 char maximum

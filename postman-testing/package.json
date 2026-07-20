@@ -1,0 +1,15 @@
+{
+  "name": "taskflow-postman-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blackbox API test suite for the TaskFlow API, run via Postman or Newman (CLI).",
+  "scripts": {
+    "test:local": "newman run collections/TaskFlow.postman_collection.json -e environments/local.postman_environment.json --folder Health --folder Auth --folder Tasks --folder \"Cross-User Ownership\" -r cli,htmlextra --reporter-htmlextra-export newman-reports/local-report.html",
+    "test:production": "newman run collections/TaskFlow.postman_collection.json -e environments/production.postman_environment.json --folder Health --folder Auth --folder Tasks --folder \"Cross-User Ownership\" -r cli,htmlextra --reporter-htmlextra-export newman-reports/production-report.html",
+    "test:data-driven:local": "newman run collections/TaskFlow.postman_collection.json -e environments/local.postman_environment.json --folder \"Data-Driven Validation\" -d data/register-validation-data.csv -r cli,htmlextra --reporter-htmlextra-export newman-reports/data-driven-report.html"
+  },
+  "devDependencies": {
+    "newman": "^6.2.1",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}

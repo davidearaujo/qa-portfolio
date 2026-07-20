@@ -1,0 +1,84 @@
+name: Postman API Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "postman-testing/**"
+      - "app/server/**"
+      - ".github/workflows/postman.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "postman-testing/**"
+      - "app/server/**"
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # CI spins up its own instance of the API rather than hitting the
+      # deployed Render URL. This keeps the suite fast, reliable, and
+      # independent of the free-tier cold-start delay / external network.
+      - name: Install and build the API
+        working-directory: app/server
+        run: |
+          npm install
+          npm run build
+
+      - name: Start the API in the background
+        working-directory: app/server
+        run: |
+          cp .env.example .env
+          npm start &
+          echo "Waiting for API to be ready..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:4000/health > /dev/null; then
+              echo "API is up."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not start in time." >&2
+          exit 1
+
+      - name: Install Postman test dependencies
+        working-directory: postman-testing
+        run: npm install
+
+      - name: Run Blackbox test suite (Health, Auth, Tasks, Ownership)
+        working-directory: postman-testing
+        run: |
+          mkdir -p newman-reports
+          npx newman run collections/TaskFlow.postman_collection.json \
+            -e environments/local.postman_environment.json \
+            --folder Health --folder Auth --folder Tasks --folder "Cross-User Ownership" \
+            -r cli,htmlextra \
+            --reporter-htmlextra-export newman-reports/main-report.html
+
+      - name: Run data-driven validation suite
+        working-directory: postman-testing
+        run: |
+          npx newman run collections/TaskFlow.postman_collection.json \
+            -e environments/local.postman_environment.json \
+            --folder "Data-Driven Validation" \
+            -d data/register-validation-data.csv \
+            -r cli,htmlextra \
+            --reporter-htmlextra-export newman-reports/data-driven-report.html
+
+      - name: Upload HTML test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-html-reports
+          path: postman-testing/newman-reports/*.html
+          retention-days: 30
