@@ -31,6 +31,8 @@ The SQLite database file and schema are created automatically on first boot — 
 
 ## API Reference
 
+Full endpoint-by-endpoint reference (request bodies, auth requirements, every status code and error) is in [API.md](./API.md). Quick summary below.
+
 All error responses follow the same shape:
 ```json
 { "error": { "code": "SOME_CODE", "message": "Human readable message", "details": {} } }
